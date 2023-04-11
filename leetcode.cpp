@@ -842,22 +842,37 @@ public:
     //-------------------------------------------------------------------
     //整数拆分
     int integerBreak(int n) {
-        vector<int>dp(n+1);
-        dp[2]=1;
+        vector<int>dp(n+1);//定义dp数组
+        dp[2]=1;//初始化dp数组，dp[2]等于1
         for(int i=3;i<=n;i++){
+            //比较dp[i]是因为；在第二次for循环当中不断地查找最大dp[i]
             for(int j=1;j<=i/2;j++){
                 dp[i]=max(max(j*(i-j),j*dp[i-j]),dp[i]);
+                //j*(i-j)两个数比较；j*dp[i-j]是比较多个数的集合；
             }
         }
         return dp[n];
     }
-
+    //------------------------------------------------------------
+    //不同的二叉搜索树
+    /*将二叉树分为左右子树，左右子树相乘，再将一个搜索树分成多少种情况累加，
+    得到最后的dp数组*/
+    int numTrees(int n) {
+        vector<int>dp(n+1);
+        dp[0]=1,dp[1]=1;//初始化dp
+        for(int i=2;i<=n;i++){
+            for(int j=1;j<=i;j++){//定义一棵子树的情况，i-j就是另一个子树的情况
+                dp[i]+=dp[j-1]*dp[i-j];//j-1是因为要去除头结点
+            }
+        }
+        return dp[n];
+    }
 };
 
 int main() {
-    int test = 10;
+    int test = 3;
     Solution solution;
-    int res = solution.integerBreak(test);
+    int res = solution.numTrees(test);
     cout << res << endl;
     system("pause");
     return 0;
