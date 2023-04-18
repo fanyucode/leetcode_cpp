@@ -867,6 +867,97 @@ public:
         }
         return dp[n];
     }
+    //----------------------------------------------------------------
+    //背包问题，二维数组
+    void test_2_wei_bag_problem1(){
+        vector<int>weight={1,3,4};
+        vector<int>value={15,20,30};
+        int bagWeight=4;
+        //定义dp数组
+        vector<vector<int>>dp(weight.size(),vector<int>(bagWeight+1,0));
+        //初始化
+        for(int i=weight[0];i<=bagWeight;i++){
+            dp[0][i]=value[0];
+        }//将装上物品0的背包重量，开始设置为value[0];设置为初始值
+        for(int i=1;i<weight.size();i++){//遍历物品 
+            for(int j=0;j<=bagWeight;j++){//遍历背包容量
+                if(j<weight[i]) dp[i][j]=dp[i-1][j];/*
+                当j没有想拿的物品种，当前物品就是没拿当前物品的东西的最大价值*/
+                else dp[i][j]=max(dp[i][j],dp[i-1][j-weight[i]]+value[i]);
+                //当拿到了物品，上个物品减去当前重量加上val的值，和之前最大的dp[i][j]的最大值
+            }
+        }
+        cout<<dp[weight.size()-1][bagWeight]<<endl;
+    }
+    //背包问题的滚动数组
+    void test_1_wei_bag_problem() {
+        vector<int>weight={1,3,4};
+        vector<int>value={15,20,30};
+        int bagWeight=4;
+        vector<int> dp(bagWeight,0);
+        for(int i=0;i<weight.size();i++){
+            for(int j=bagWeight;j>=weight[i];j--){
+                dp[j]=max(dp[j],dp[j-weight[i]]+value[i]);
+            }
+        }
+    }
+    //------------------------------------------------------------------
+    //分割等和子集
+    bool  canPartition(vector<int>&  nums){
+        int sum=0;
+        for(int i=0;i<nums.size();i++){
+            sum+=nums[i];
+        }//将数组sum累加
+        if(sum%2==1){
+            return  false;
+        }//当数组的和是奇数；不可能存在两个子集相等
+        int target=(sum/2);//将一个数组的一半设置成背包容量
+        vector<int>dp(10001,0);//定义dp数组
+        dp[0]=0;//初始化，当dp没有装物品一定是0
+        for(int i=0;i<nums.size();i++){//遍历放入背包的数量
+            for(int j=target;j>=nums[i];j--){//倒序遍历背包的容量
+                dp[j]=max(dp[j],dp[j-nums[i]]+nums[i]);//数组的容量也是背包的价值
+            }
+        }
+        if(dp[target]==target) return true;//当出现相加等于原数组的一半时，就返回true
+        //出现一组是一半，另一半的量也必是target
+        return false;
+    }
+    //----------------------------------------------------------------------------
+    //最后一块石头的重量II
+    //就是求两个最相近的子集的最小的差值
+    int  lastStoneWightII(vector<int>& stones){
+        int sum=0;
+        for(int i=0;i<stones.size();i++){
+            sum+=stones[i];
+        }//重量求和
+        int target=(sum/2);
+        vector<int>dp(1501,0);
+        dp[0]=0;//初始化dp数组
+        for(int i=0;i<stones.size();i++){//对数量遍历
+            for(int j=target;j>=stones[i];j--){//对容量遍历
+                dp[j]=max(dp[j],dp[j-stones[i]]+stones[i]);
+            }
+        }
+        return abs(sum-(dp[target]*2));//返回相差最小的target
+    }
+    //------------------------------------------------------------
+    //目标和
+    int findTargetSumWays(vector<int>& nums,int target){
+        int sum=0;
+        for(int i=0;i<nums.size();i++) sum+=nums[i];//总和
+        if((sum+target)%2==1) return 0;//如果除二有余数；必定没有结果
+        if(abs(target)>sum) return 0;//如果target大于数组所有的和；也不可能存在 
+        int bagSize=(sum+target)/2;//将书包的容量定义成正数的集合；正数加上负数的集合等于target
+        vector<int>dp(bagSize+1,0);//将数组其他数初始化为零
+        dp[0]=1;//dp[0]等于1
+        for(int i=0;i<nums.size();i++){
+            for(int j=bagSize;j>=nums[i];j--){
+                dp[j]+=dp[j-nums[i]];//dp[j]=dp[j-1]+dp[j-2]+...+dp[0]递推逻辑
+            }
+        }
+        return dp[bagSize];
+    }
 };
 
 int main() {
