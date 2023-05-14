@@ -6,6 +6,7 @@
 #include<unordered_set>
 #include<list>
 #include<stdlib.h>
+#include<stack>
 using namespace std;
 class Solution {
 public:
@@ -958,13 +959,616 @@ public:
         }
         return dp[bagSize];
     }
+    //---------------------------------------------------------------------------
+    //零和一
+    int findMaxForm(vector<string>& strs,int m,int n){
+        vector<vector<int>>dp(m+1,vector<int>(n+1,0));
+        //val的值就是子序列的最大容量
+        //背包的容量就是0和1的值
+        for(string  str:strs){//遍历物体的个数
+            int x=0,y=0;//初始化遍历的字符串的初始化
+            for(char a:str){
+                if(a=='0')
+                    x++;
+                else y++;
+                //计算每次字符串中0和1的大小,作为背包的容量
+            }
+            for(int i=m;i>=x;i--){
+                for(int j=n;j>=y;j--){
+                    dp[i][j]=max(dp[i-x][j-y]+1,dp[i][j]);
+                }
+            }//两次for循环都是对背包总体重量的一个遍历
+        }
+        return dp[m][n];
+    }
+    //--------------------------------------------------------------------------------
+    //完全背包
+    //先遍历物品，后遍历容量是组合数
+    void test_CompletePack1() {
+        vector<int> weight = {1, 3, 4};
+        vector<int> value = {15, 20, 30};
+        int bagWeight = 4;
+        vector<int> dp(bagWeight + 1, 0);
+        for(int i = 0; i < weight.size(); i++) { // 遍历物品
+            for(int j = weight[i]; j <= bagWeight; j++) { // 遍历背包容量
+                dp[j] = max(dp[j], dp[j - weight[i]] + value[i]);
+                cout<<dp[j]<<" ";
+            }
+            cout<<endl;
+
+        }
+        cout << dp[bagWeight] << endl;
+    };
+    //先遍历背包；在遍历物品，是排列数
+    void test_CompletePack2() {
+        vector<int> weight = {1, 3, 4};
+        vector<int> value = {15, 20, 30};
+        int bagWeight = 4;
+
+        vector<int> dp(bagWeight + 1, 0);
+
+        for(int j = 0; j <= bagWeight; j++) { // 遍历背包容量
+            for(int i = 0; i < weight.size(); i++) { // 遍历物品
+                if (j - weight[i] >= 0) dp[j] = max(dp[j], dp[j - weight[i]] + value[i]);
+                cout<<dp[j]<<" ";
+            }
+            cout<<endl;
+        }
+        cout << dp[bagWeight] << endl;
+    };
+    //-------------------------------------------------------------
+    //零钱兑换II
+    int change(int amount,vector<int>& coins){
+        vector<int>dp(amount+1,0);//初始化dp数组
+        dp[0]=1;//dp[0]等于1
+        for(int i=0;i<coins.size();i++){//遍历物品
+            for(int j=coins[i];j<=amount;j++){//遍历背包的容量
+                dp[j]+=dp[j-coins[i]];
+            }
+        }
+        return dp[amount];
+    };
+    //--------------------------------------------------------------
+    //组合总和IV
+    //求排列问题应先遍历背包容量；在遍历物品
+    int combinationSum4(vector<int>&nums,int target){
+        vector<int>dp(target+1,0);
+        dp[0]=1;
+        for(int j=0;j<=target;j++){//遍历背包容量
+            for(int i=0;i<nums.size();i++)//遍历物品
+            if(j-nums[i]&&dp[j]<INT_MAX-dp[j-nums[i]])
+             dp[j]+=dp[j-nums[i]];
+        }
+        return dp[target];
+    }
+    //-----------------------------------------------------------
+    //零钱兑换
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int>dp(amount+1,INT_MAX);
+        dp[0]=0;
+        for(int i=0;i<coins.size();i++){//遍历物品
+            for(int j=coins[i];j<=amount;j++){//遍历背包
+                if(dp[j-coins[i]]!=INT_MAX){//如果dp[j-coins[i]]是初始值则跳过 
+                    dp[j]=min(dp[j-coins[i]]+1,dp[j]);//取最小的硬币数
+                }
+            }
+        }
+        if(dp[amount]==INT_MAX) return -1;
+        return dp[amount];
+    }
+    //-----------------------------------------------------
+    //完全平方数
+    int numSquares(int n){
+        vector<int>dp(n+1,INT_MAX);
+        dp[0]=0;
+        for(int i=1;i*i<=n;i++){//遍历平方数，临界值是小于这个容量
+            for(int j=i*i;j<=n;j++){//便利背包小于n的容量
+                dp[j]=min(dp[j-(i*i)]+1,dp[j]);  
+            }
+        }
+        return dp[n];
+    }
+    //-------------------------------------------------------------
+    //单词拆分
+    bool wordBreak(string s, vector<string>& wordDict) {
+        unordered_set<string>wordSet(wordDict.begin(),wordDict.end());
+        vector<bool>dp(s.size()+1,false);//初始化dp数组，dp数组的其他都将置为false
+        dp[0]=true;//将dp[0]置为true，否则后面都是false
+        //由于数求排列数
+        for(int i=1;i<=s.size();i++){//定义字符串后面的数
+            for(int j=0;j<i;j++){//遍历字符串前面的数
+                string word =s.substr(j,i-j);
+                if(wordSet.find(word)!=wordSet.end()&&dp[j]){
+                    dp[i]=true;
+                }
+            }
+        }
+        return dp[s.size()];
+    }
+    //-----------------------------------------------------------------
+    //打家劫舍
+    int rob(vector<int>& nums){
+        if(nums.size()==0) return 0;
+        if(nums.size()==1) return nums[0];
+        vector<int>dp(nums.size()+1,0);
+        dp[0]=nums[0];//dp[0]只能取第一家所以必须要偷
+        dp[1]=max(nums[0],nums[1]);//dp[1]需要比较第一家和第二家哪个比较多
+        for(int i=2;i<nums.size();i++){
+            dp[i]=max(dp[i-2]+nums[i],dp[i-1]);//不能偷相邻的，则需要比较dp[i-2]加上当前的钱数比较dp[i-1]的大小 
+        }
+        return  dp[nums.size()-1];
+    }
+    //---------------------------------------------------------------------
+    //打家劫舍II
+    //分为两种情况，一个取第一个数，不取末尾数；二是不取第一个数，取末尾数
+    //可以将一个环形任务转换成两个线性任务；取两个情况的最大值就是最后答案
+    int  robII(vector<int>&nums){
+        if(nums.size()==0) return 0;
+        if(nums.size()==1) return nums[0];
+        vector<int>v1,v2;
+        v1.assign(nums.begin(),nums.end()-1);
+        v2.assign(nums.begin()+1,nums.end());
+        return max(rob(v1),rob(v2));
+    }
+    //---------------------------------------------------------------------
+    //打家劫舍III
+    /*当前节点定义成两个状态，dp[1]表示偷，dp[0]表示不偷
+    比较最后的根节点偷不偷两个大小，使用后序遍历*/
+    vector<int> robtree(TreeNode* cur){
+        if(cur==NULL) return vector<int>{0,0};//终止条件
+        vector<int>leftdp=robtree(cur->left);//左
+        vector<int>rightdp=robtree(cur->right);//右
+        //当root偷的情况,左右子树肯定不能偷
+        int val1=cur->val+leftdp[0]+rightdp[0];
+        //当root不偷，左右子树只需要取两棵子树的大小
+        int val2=max(leftdp[0],leftdp[1])+max(rightdp[0],rightdp[1]);
+        return {val2,val1};
+    }
+    int robIII(TreeNode* root){
+        vector<int>res=robtree(root);
+        return max(res[0],res[1]);
+    }
+    //---------------------------------------------------------------------
+    //买卖股票的最佳时机
+    int maxProfitDp(vector<int>& prices){
+        int len=prices.size();
+        if(len==0) return 0;
+        vector<vector<int>> dp(len,vector<int>(2));
+        dp[0][0]=0;//表示第一天不持有股票的状态，第一天不买就为0
+        dp[0][1]-=prices[0];//表示第一天购买了股票的状态
+        for(int i=1;i<len;i++){
+            dp[i][0]=max(dp[i-1][0],dp[i-1][1]+prices[i]);//如果当天没有股票，只有可能前一天也没有，或者前一天有，此时卖了
+            dp[i][1]=max(dp[i-1][1],-prices[i]);//前一天有，当时购入，因为不能重复购买，此时一定只能是-prices
+        } 
+        return dp[len-1][0];
+    }
+    //--------------------------------------------------------------------------
+    //买卖股票的最佳时机II
+    int maxProfitIIDp(vector<int>& prices){
+        int len=prices.size();
+        if(len==0) return 0;
+        vector<vector<int>> dp(len,vector<int>(2));
+        dp[0][0]=0;//表示第一天不持有股票的状态，第一天不买就为0
+        dp[0][1]-=prices[0];//表示第一天购买了股票的状态
+        for(int i=1;i<len;i++){
+            dp[i][0]=max(dp[i-1][0],dp[i-1][1]+prices[i]);//如果当天没有股票，只有可能前一天也没有，或者前一天有，此时卖了
+            dp[i][1]=max(dp[i-1][1],dp[i-1][0]-prices[i]);//可以购买多次，贼需要记录前一天的状态
+        } 
+        return dp[len-1][0];
+    }
+    //-------------------------------------------------------------------------------
+    //买卖股票的最佳时机III
+    int maxProfitIIIDp(vector<int>& prices){
+        int len =prices.size();
+        if(len==0) return 0;
+        vector<vector<int>> dp(len,vector<int>(5));
+        //初始化
+        dp[0][0]=0;//第一天不操作为0
+        dp[0][1]-=prices[0];//第一天购买初始化为减去第一天股票价格
+        dp[0][2]=0;//第一天购买又卖出初始化0
+        dp[0][3]-=prices[0];//第一天再次购买
+        dp[0][4]=0;//再次卖出
+        for(int i=1;i<len;i++){
+            dp[i][0]=dp[i-1][0];//没有操作就只能是前一天没操作状态得到
+            dp[i][1]=max(dp[i-1][1],-prices[i]);//前一天有了或者现在购买
+            dp[i][2]=max(dp[i-1][2],dp[i-1][1]+prices[i]);//前一天卖出或者现在卖出；
+            dp[i][3]=max(dp[i-1][3],dp[i-1][2]-prices[i]);//保持前一天状态或者现在购入 
+            dp[i][4]=max(dp[i-1][4],dp[i-1][3]+prices[i]);//保持前一天状态或者现在卖出
+        }
+        return dp[len-1][4];
+    }
+    //-------------------------------------------------------------------------------
+    //买卖股票的最佳时机IV
+    int maxProfitIVDp(vector<int>& prices,int k){
+        int len = prices.size();
+        if(len==0) return 0;
+        vector<vector<int>> dp(len,vector<int>(2*k+1,0));
+        for(int j=1;j<2*k;j+=2){
+            dp[0][j]-=prices[0];
+        }
+        for(int i=1;i<len;i++){
+            for(int j=0;j<2*k-1;j+=2){
+                dp[i][j+1]=max(dp[i-1][j+1],dp[i-1][j]-prices[i]);
+                dp[i][j+2]=max(dp[i-1][j+2],dp[i-1][j+1]+prices[i]);
+            }
+        }
+        return dp[len-1][2*k];
+    }
+    //---------------------------------------------------------------------------------
+    //最佳买卖股票时机含冷冻期
+    int maxProfitDpV(vector<int>& prices){
+        int len = prices.size();
+        if(len==0) return 0;
+        vector<vector<int>> dp(len,vector<int>(4,0));
+        dp[0][0]-=prices[0];//第一天购买股票
+        for(int i=1;i<len;i++){
+            dp[i][0]=max(dp[i-1][0],max(dp[i-1][1]-prices[i],dp[i-1][2]-prices[i]));//购入股票
+            dp[i][1]=max(dp[i-1][1],dp[i-1][2]);//持续没有时期 
+            dp[i][2]=dp[i-1][3];//冷冻期
+            dp[i][3]=dp[i-1][0]+prices[i];//卖出
+        }
+        return max(dp[len-1][1],max(dp[len-1][2],dp[len-1][3]));
+    }
+    //--------------------------------------------------------------------------------
+    //买卖股票的最佳时机含手续费
+    int maxProfitDpVI(vector<int>& prices,int fee){
+        int len=prices.size();
+        if(len==0) return 0;
+        vector<vector<int>> dp(len,vector<int>(2));
+        dp[0][0]=0;//表示第一天不持有股票的状态，第一天不买就为0
+        dp[0][1]-=prices[0];//表示第一天购买了股票的状态
+        for(int i=1;i<len;i++){
+            dp[i][0]=max(dp[i-1][0],dp[i-1][1]+prices[i]-fee);//如果当天没有股票，只有可能前一天也没有，或者前一天有,现在卖加上利润减去手续费 
+            dp[i][1]=max(dp[i-1][1],dp[i-1][0]-prices[i]);//可以购买多次，贼需要记录前一天的状态
+        } 
+        return dp[len-1][0];
+    }
+    //-----------------------------------------------------------------------------------
+    //最长递增子序列
+    int lengthOfLIS(vector<int>& nums) {
+        if(nums.size()<=1) return nums.size();
+        vector<int>dp(nums.size()+1,1);//dp数组的含义是以当前值为末尾的最大子序列
+        dp[0]=1;
+        int res=0;
+        for(int i=1;i<nums.size();i++){
+            for(int j=0;j<i;j++){
+                if(nums[i]>nums[j]){
+                    dp[i]=max(dp[j]+1,dp[i]);
+                }
+            }
+            res=max(res,dp[i]);
+        }
+        return res;
+    }
+    //-----------------------------------------------------------------------------------
+    //最长的连续递增序列
+    int findLengthOfLCIS(vector<int>& nums) {
+        if(nums.size()<=1) return nums.size();
+        vector<int>dp(nums.size()+1,1);//以当前值为末尾的最大连续子序列
+        dp[0]=1;
+        int res=0;
+        for(int i=1;i<nums.size();i++){
+            if(nums[i]>nums[i-1]){
+                dp[i]=dp[i-1]+1;
+            }
+            res=max(dp[i],res);
+        }
+        return res;
+    }
+    //-------------------------------------------------------------------------------------
+    //最长重复子序列
+    int findLength(vector<int>& nums1, vector<int>& nums2) {
+        if(nums1.size()==0||nums2.size()==0) return 0;
+        vector<vector<int>>dp(nums1.size()+1,vector<int>(nums2.size()+1,0));//dp数组的含义，nums1以i-1为结尾，nums2以j-1为结尾的最大重复子序列
+        /*如果使用dp数组的含义定义为i，j为末尾；则当dp数组进行dp初始化；
+        需要判断初始化的值，因为有的可能是相同的则需要将dp数组的值初始化为1*/  
+        int res=0;
+        for(int i=1;i<=nums1.size();i++){
+            for(int j=1;j<nums2.size();j++){
+                if(nums1[i-1]==nums2[j-1]){
+                    dp[i][j]=dp[i-1][j-1]+1;//因为两个数组要同时进行+1操作，则dp[i][j]的状态只能由dp[i-1][j-1]得到
+                }
+                res=max(dp[i][j],res);
+            }
+        }  
+        return res;
+    };
+    //------------------------------------------------------------------------------------------
+    //最长公共子序列
+    int longestCommonSubsequence(string text1, string text2) {
+        if(text1.size()==0||text2.size()==0) return 0;
+        vector<vector<int>> dp(text1.size()+1,vector<int>(text2.size()+1,0));//dp数组定义同上
+        for(int i=1;i<=text1.size();i++){
+            for(int j=1;j<=text2.size();j++){
+                if(text1[i-1]==text2[j-1]){
+                    dp[i][j]=dp[i-1][j-1]+1;//当末尾相等直接前面加一
+                }else{
+                    dp[i][j]=max(dp[i-1][j],dp[i][j-1]);//当末尾不相等，dp[i][j]可能的两个状态
+                    //去掉第一个数组的末尾比较结果，或者去掉第二数组的末尾比较结果，取最大值
+                }
+            }
+        }
+        return dp[text1.size()][text2.size()];
+    }
+    //----------------------------------------------------------------------------------------
+    //不相交的线
+    int maxUncrossedLines(vector<int>& nums1, vector<int>& nums2) {
+        if(nums1.size()==0||nums2.size()==0) return 0;
+        vector<vector<int>> dp(nums1.size()+1,vector<int>(nums2.size()+1,0));//dp数组定义同上
+        for(int i=1;i<=nums1.size();i++){
+            for(int j=1;j<=nums2.size();j++){
+                if(nums1[i-1]==nums2[j-1]){
+                    dp[i][j]=dp[i-1][j-1]+1;//当末尾相等直接前面加一
+                }else{
+                    dp[i][j]=max(dp[i-1][j],dp[i][j-1]);//当末尾不相等，dp[i][j]可能的两个状态
+                    //去掉第一个数组的末尾比较结果，或者去掉第二数组的末尾比较结果，取最大值
+                }
+            }
+        }
+        return dp[nums1.size()][nums2.size()];
+    }
+    //----------------------------------------------------------------------------------------
+    //最大的连续子序列和
+    int maxSubArrayDp(vector<int>& nums){
+        vector<int>dp(nums.size());//以该结尾的最大子序列和
+        dp[0]=nums[0];
+        int res=dp[0];
+        for(int i=1;i<nums.size();i++){
+            dp[i]=max(dp[i-1]+nums[i],nums[i]);
+            if(res<dp[i]) res=dp[i];
+        }
+        return res;
+    }
+    //--------------------------------------------------------------------------------------
+    //判断子序列
+    bool isSubsequence(string s, string t) {
+        vector<vector<int>>dp(s.size()+1,vector<int>(t.size()+1,0));//以i-1，j-1为末尾的数
+        for(int i=1;i<=s.size();i++){
+            for(int j=1;j<=t.size();j++){
+                if(s[i-1]==t[j-1]) {
+                    dp[i][j]=dp[i-1][j-1]+1;
+                }else{
+                    dp[i][j]=dp[i][j-1];//比较是不是子序列，t去掉末尾等于现在状态就可以
+                }
+            }
+        }
+        return dp[s.size()][t.size()]==s.size();
+    }
+    //-------------------------------------------------------------------------------------
+    //不同的子序列
+    int numDistinct(string s, string t) {
+        vector<vector<int>>dp(s.size()+1,vector<int>(t.size()+1));
+        for(int i=0;i<=s.size();i++){
+            dp[i][0]=1;
+        }//当t等于零时；只能将s删完这个方法；所以dp[i][0]=1
+        for(int j=1;j<=t.size();j++){
+            dp[0][j]=0;
+        }//当s等于零时，t不等于0；没有办法删除使其相等
+        for(int i=1;i<=s.size();i++){
+            for(int j=1;j<=t.size();j++){
+                if(s[i-1]==t[j-1]){//当末尾数相等时；
+                    dp[i][j]=dp[i-1][j-1]+dp[i-1][j];//当两边同时减去的末尾也一定是成立，然后s可能减去这个末尾也可能同样成立
+                }else{
+                    dp[i][j]=dp[i-1][j];//不相等，只能是s只能减去末尾的状态
+                }
+            }
+        }
+        return dp[s.size()][t.size()];
+    }
+    //------------------------------------------------------------
+    //两个字符串的删除操作
+    int minDistance(string word1, string word2) {
+        vector<vector<int>>dp(word1.size()+1,vector<int>(word2.size()+1,0));
+        for(int i=0;i<=word1.size();i++){
+            dp[i][0]=i;
+        };//当word1有i个数字时,word2有0个字母；word1删除i个相同
+        for(int j=1;j<=word2.size();j++){
+            dp[0][j]=j;
+        };//同上
+        for(int i=1;i<=word1.size();i++){
+            for(int j=1;j<=word2.size();j++){
+                if(word1[i-1]==word2[j-1]){
+                    dp[i][j]=dp[i-1][j-1];//当相等时则直接等于两边直接减一不需要进行操作
+                }else{
+                    dp[i][j]=min(dp[i-1][j]+1,dp[i][j-1]+1);
+                }//当不相等需要删除其中末尾一个数字，则需要进行操作加1
+            }
+        }
+        return dp[word1.size()][word2.size()];
+    }
+    //----------------------------------------------------------------------------------------
+    //编辑距离
+    int minDistance1(string word1, string word2) {
+        vector<vector<int>>dp(word1.size()+1,vector<int>(word2.size()+1,0));
+        for(int i=0;i<=word1.size();i++){
+            dp[i][0]=i;
+        };//当word1有i个数字时,word2有0个字母；word1删除i个相同
+        for(int j=1;j<=word2.size();j++){
+            dp[0][j]=j;
+        };//同上
+        for(int i=1;i<=word1.size();i++){
+            for(int j=1;j<=word2.size();j++){
+                if(word1[i-1]==word2[j-1]){
+                    dp[i][j]=dp[i-1][j-1];//当末尾相等时；他的操作次数直接等于两边末尾忽略的次数
+                }else{
+                    dp[i][j]=min(min(dp[i-1][j]+1,dp[i][j-1]+1),dp[i-1][j-1]+1);
+                    /*当两边不相等时，三个状态得到，各自删除末尾的单词，增加一个单词的等同于另一个删除末尾；
+                    替换操作，当末尾替换时，就等于增加一次操作，然后等于末尾相等那种情况*/
+                }
+            }
+        }
+        return dp[word1.size()][word2.size()];
+    }
+    //-------------------------------------------------------------------------------------------------
+    //回文子串
+    int countSubstrings(string s) {
+        vector<vector<bool>>dp(s.size(),vector<bool>(s.size(),false));
+        //dp数组的含义，i，j范围是否是回文串
+        int res=0;
+        //根据递推公式，dp[i][j]只能从左下角往上推，所以遍历顺序是i从小到大，j从i开始增加
+        for(int i=s.size()-1;i>=0;i--){
+            for(int j=i;j<s.size();j++){
+                if(s[i]==s[j]){//判断ij是否相等
+                    if((j-i)<=1){//如果i和j的差小于等于1，说明两数是同一个或者相邻
+                        dp[i][j]=true;
+                        res++;
+                    }else{
+                        if(dp[i+1][j-1]==true){//两头缩减的子串是回文串，则i,j范围也是子串,dp[i][j]为true
+                            dp[i][j]=true;
+                            res++;
+                        }
+                    }
+                }
+            }
+        }
+        return res;
+    }
+    //--------------------------------------------------------------------------------------------------------
+    //最长回文子序列
+    int longestPalindromeSubseq(string s) {
+        vector<vector<int>>dp(s.size(),vector<int>(s.size(),0));//i,j范围内的最长回文子串
+        for(int  i=0;i<s.size();i++)  dp[i][i]=1;//将ij相等的位置初始化为1
+        for(int i=s.size()-1;i>=0;i--){//只能从左下向右上推
+            for(int j=i+1;j<s.size();j++){
+                if(s[i]==s[j]){//如果ij相等
+                    dp[i][j]=dp[i+1][j-1]+2;//两边同时缩减，将长度加二
+                }else{
+                    dp[i][j]=max(dp[i+1][j],dp[i][j-1]);//如果不相等，只能由前面去掉或者后面去掉来得到
+                }
+            }
+        }
+        return dp[0][s.size()-1];//返回左边界和右边界的最大子串   
+    }
+    //--------------------------------------------------------------------------------------------------
+    //每日温度
+    vector<int> dailyTemperatures(vector<int>& temperatures) {
+        stack<int> st;//定义栈，栈中存入遍历的数组下标
+        vector<int>res(temperatures.size(),0);//将数组初始化成0,当遍历完栈中仍然没有比他的数，就默认初始化的数为0
+        st.push(0);//将第一个数加入栈
+        for(int  i=1;i<temperatures.size();i++){
+            if(temperatures[i]<=temperatures[st.top()]){//如果当前数比栈顶数小，将下标存入栈
+                st.push(i);
+            }else{
+                while(!st.empty()&&temperatures[i]>temperatures[st.top()]){//使用while因为当前数要不断比较栈顶元素，st不为空
+                    res[st.top()]=i-st.top();//将结果数组下标位置为栈顶元素到比较数的距离 
+                    st.pop();//比较结束将栈顶元素删除
+                }
+                st.push(i);//while结束需要将这个数加入栈中
+            }
+        }
+        return res;
+    }
+    //-------------------------------------------------------------------------------------------------------
+    //下一个更大的元素
+    vector<int> nextGreaterElement(vector<int>& nums1, vector<int>& nums2) {
+        vector<int> res(nums1.size(),-1);//将数组初始化成-1
+        if(nums1.size()==0) return res;
+        stack<int>  st;//定义栈
+        unordered_map<int,int>umap;//使用unordered_map查值更加迅速
+        for(int i=0;i<nums1.size();i++){
+            umap[nums1[i]]=i;
+        }//对数组1进行哈希映射
+        st.push(0);//将栈中首位存入
+        for(int i=1;i<nums2.size();i++){
+            if(nums2[i]<=nums2[st.top()]){
+                st.push(i);
+            }else{
+                while(!st.empty()&&nums2[i]>nums2[st.top()]){
+                    if(umap.count(nums2[st.top()])>0){//当出现栈顶元素时,注意栈中记录的在nums2中的位置
+                        int index=umap[nums2[st.top()]];//记录哈希映射的nums1数组位置
+                        res[index]= nums2[i];//结果数组按照数组位置进行赋值
+                        st.pop();//删除栈中元素
+                    }
+                }
+                st.push(i);//将新的更大值存入栈中
+            }
+        }
+        return res;
+    }
+    //--------------------------------------------------------------------------------------------
+    //下一个更大元素II
+    vector<int> nextGreaterElements(vector<int>& nums) {
+        vector<int>res(nums.size(),-1);
+        stack<int> st;
+        st.push(0);
+        for(int i=1;i<nums.size()*2;i++){//将数组遍历两次
+            //对于数组取环，可以计算他的取模进行定义
+            if(nums[i%(nums.size())]<=nums[st.top()]){
+                st.push(i%(nums.size()));
+            }else{
+                while(!st.empty()&&nums[i%(nums.size())]>nums[st.top()]){
+                    res[st.top()]=nums[i%(nums.size())];
+                    /*当模拟单调递增，会重复出现相同的结果数组；
+                    当单调递减时，后面的值都存入栈中，并未进行赋值操作，就如同上面的默认初始化的操作，
+                    后面的没有大数并没有进行操作，一直都是初始化的数*/
+                    st.pop();
+                }
+                st.push(i%(nums.size()));
+            }
+        }
+        return res;
+    }
+    //------------------------------------------------------------------------------------------
+    //接雨水
+    int trap(vector<int>& height) {
+        int sum=0;//定义结果
+        stack<int> st;//定义单调栈
+        st.push(0);
+        for(int i=1;i<height.size();i++){
+            if(height[i]<=height[st.top()]){
+                st.push(i);
+            }else{
+                while(!st.empty()&&height[i]>height[st.top()]){
+                    int mid=st.top();
+                    st.pop();
+                    if(!st.empty()){
+                        int h=min(height[i],height[st.top()])-height[mid];//定义高度 
+                        int w=i-st.top()-1;//定义宽度
+                        sum+=(h*w);//累加容量
+                    }
+                }
+                st.push(i);
+            }
+        }
+        return sum;
+    }
+    //------------------------------------------------------------------------------------------
+    //柱状图中最大的矩形
+    int largestRectangleArea(vector<int>& heights) {
+        int maxArea=0;//定义结果数组
+        stack<int> st;
+        heights.insert(heights.begin(),0);
+        heights.push_back(0);
+        st.push(0);
+        /*使用，单调栈求解右边，比当前最小的值*/
+        for(int i=1;i<heights.size();i++){
+            if(heights[i]>=heights[st.top()]){
+                st.push(i);
+            }else{
+                while(!st.empty()&&heights[i]<heights[st.top()]){
+                    int mid=st.top();
+                    st.pop();
+                    if(!st.empty()){
+                        int left=st.top();
+                        int right=i;
+                        int w=right-left-1;
+                        int h=heights[mid];
+                        maxArea=max(maxArea,w*h);
+                    }
+                }
+                st.push(i);
+            }
+        }
+        return maxArea;
+    }
+
 };
 
 int main() {
-    int test = 3;
+    vector<int> prices={2,4};
     Solution solution;
-    int res = solution.numTrees(test);
-    cout << res << endl;
+    int ans=solution.largestRectangleArea(prices);
+    cout<<ans<<endl;
     system("pause");
     return 0;
 };
